@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ElGolondras — Portfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg:       #020818;
+    --bg2:      #050f2e;
+    --accent:   #2563eb;
+    --accent2:  #60a5fa;
+    --text:     #e2e8f0;
+    --muted:    #64748b;
+    --card:     rgba(255,255,255,0.04);
+    --border:   rgba(37,99,235,0.2);
+  }
+
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; cursor:none; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* ── CURSOR ── */
+  #c-outer {
+    position: fixed; width:38px; height:38px;
+    border: 2px solid rgba(37,99,235,0.8);
+    border-radius: 50%;
+    pointer-events: none; z-index:99999;
+    transform: translate(-50%,-50%);
+    transition: width .2s, height .2s, border-color .2s;
+    mix-blend-mode: difference;
+  }
+  #c-inner {
+    position: fixed; width:7px; height:7px;
+    background: var(--accent);
+    border-radius: 50%;
+    pointer-events: none; z-index:99999;
+    transform: translate(-50%,-50%);
+    box-shadow: 0 0 10px rgba(37,99,235,0.9);
+  }
+  body:has(a:hover) #c-outer,
+  body:has(button:hover) #c-outer { width:56px; height:56px; border-color:#fff; }
+
+  /* ── MATRIX CANVAS ── */
+  #matrix {
+    position: fixed; inset:0;
+    pointer-events: none; z-index:0;
+    opacity: 0.13;
+  }
+
+  /* ── PARTICLES CANVAS ── */
+  #particles {
+    position: fixed; inset:0;
+    pointer-events: none; z-index:1;
+    opacity: 0.55;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top:0; left:0; right:0;
+    z-index: 100;
+    display: flex; align-items:center; justify-content:space-between;
+    padding: 18px 48px;
+    background: rgba(2,8,24,0.7);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.1rem; font-weight:700;
+    color: var(--accent2);
+    letter-spacing: 0.05em;
+  }
+  .nav-links { display:flex; gap:32px; }
+  .nav-links a {
+    color: var(--muted); text-decoration:none;
+    font-size: .9rem; letter-spacing:.05em;
+    transition: color .2s;
+  }
+  .nav-links a:hover { color: var(--accent2); }
+
+  /* ── SECTIONS ── */
+  section { position: relative; z-index:10; }
+
+  /* ── HERO ── */
+  #hero {
+    min-height: 100vh;
+    display: flex; align-items:center; justify-content:center;
+    flex-direction: column; text-align:center;
+    padding: 100px 24px 60px;
+    gap: 24px;
+  }
+
+  .avatar-wrap {
+    position: relative; width:140px; height:140px;
+    margin: 0 auto 8px;
+  }
+  .avatar-wrap img {
+    width:140px; height:140px;
+    border-radius: 50%;
+    object-fit: cover;
+    animation: avatarPulse 2.5s ease-in-out infinite;
+    position: relative; z-index:2;
+  }
+  .avatar-ring {
+    position:absolute; inset:-8px;
+    border-radius:50%;
+    background: conic-gradient(from 0deg, #2563eb, #60a5fa, #2563eb);
+    animation: spin 4s linear infinite;
+    z-index:1;
+  }
+  .avatar-ring::after {
+    content:''; position:absolute; inset:6px;
+    background: var(--bg); border-radius:50%;
+  }
+
+  @keyframes avatarPulse {
+    0%,100% { box-shadow: 0 0 15px rgba(37,99,235,.5), 0 0 30px rgba(37,99,235,.2); }
+    50%      { box-shadow: 0 0 30px rgba(37,99,235,.9), 0 0 60px rgba(37,99,235,.5), 0 0 90px rgba(37,99,235,.2); }
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .hero-name {
+    font-size: clamp(3rem, 8vw, 6rem);
+    font-weight: 800;
+    background: linear-gradient(135deg, #fff 0%, var(--accent2) 50%, var(--accent) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.1;
+  }
+  .hero-title {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(.85rem, 2vw, 1.1rem);
+    color: var(--accent2);
+    letter-spacing: .1em;
+  }
+  .hero-desc {
+    max-width: 520px;
+    color: var(--muted);
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+
+  /* Typing cursor */
+  .typing::after {
+    content: '|';
+    animation: blink .7s step-end infinite;
+    color: var(--accent);
+  }
+  @keyframes blink { 50% { opacity:0; } }
+
+  .hero-btns { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; margin-top:8px; }
+  .btn {
+    padding: 12px 28px;
+    border-radius: 50px;
+    font-family: 'Space Mono', monospace;
+    font-size: .85rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all .25s;
+    letter-spacing: .05em;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 0 20px rgba(37,99,235,.4);
+  }
+  .btn-primary:hover { background: var(--accent2); box-shadow: 0 0 30px rgba(96,165,250,.6); transform: translateY(-2px); }
+  .btn-outline {
+    border: 1px solid var(--border);
+    color: var(--accent2);
+    background: transparent;
+  }
+  .btn-outline:hover { border-color: var(--accent2); background: rgba(37,99,235,.1); transform: translateY(-2px); }
+
+  /* ── DIVIDER ── */
+  .divider {
+    width:100%; height:1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    margin: 0;
+  }
+
+  /* ── SOBRE MÍ ── */
+  #sobre {
+    padding: 100px 24px;
+    max-width: 900px; margin: 0 auto;
+  }
+  .section-title {
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    font-weight: 800;
+    margin-bottom: 48px;
+    display: flex; align-items:center; gap:14px;
+  }
+  .section-title span { color: var(--accent); }
+  .section-title::after {
+    content:'';
+    flex:1; height:1px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    margin-left:16px;
+  }
+
+  .code-block {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    font-family: 'Space Mono', monospace;
+    font-size: .88rem;
+    line-height: 2;
+    position: relative;
+    overflow: hidden;
+  }
+  .code-block::before {
+    content:'';
+    position:absolute; inset:0;
+    background: linear-gradient(135deg, rgba(37,99,235,.05), transparent);
+    pointer-events:none;
+  }
+  .code-dots { display:flex; gap:6px; margin-bottom:20px; }
+  .code-dots span { width:12px; height:12px; border-radius:50%; }
+  .dot-red { background:#ef4444; }
+  .dot-yellow { background:#f59e0b; }
+  .dot-green { background:#22c55e; }
+  .kw { color:#818cf8; }
+  .cl { color:#60a5fa; }
+  .st { color:#34d399; }
+  .cm { color:#475569; }
+
+  /* ── TECNOLOGÍAS ── */
+  #tecnologias {
+    padding: 100px 24px;
+    max-width: 900px; margin: 0 auto;
+  }
+  .tech-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 16px;
+  }
+  .tech-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 8px;
+    display: flex; flex-direction:column;
+    align-items:center; gap:8px;
+    font-size:.75rem; color:var(--muted);
+    transition: all .25s;
+    text-align:center;
+  }
+  .tech-item:hover {
+    border-color: var(--accent);
+    background: rgba(37,99,235,.1);
+    transform: translateY(-4px);
+    color: var(--accent2);
+    box-shadow: 0 8px 24px rgba(37,99,235,.2);
+  }
+  .tech-item img { width:38px; height:38px; object-fit:contain; }
+
+  /* ── PROYECTOS ── */
+  #proyectos {
+    padding: 100px 24px;
+    max-width: 1000px; margin: 0 auto;
+  }
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+  }
+  .project-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px;
+    transition: all .3s;
+    position: relative;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+  }
+  .project-card::before {
+    content:'';
+    position:absolute; top:0; left:0; right:0; height:2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transform: scaleX(0); transform-origin:left;
+    transition: transform .3s;
+  }
+  .project-card:hover { border-color:var(--accent); transform:translateY(-6px); box-shadow:0 20px 40px rgba(37,99,235,.2); }
+  .project-card:hover::before { transform: scaleX(1); }
+  .project-icon { font-size:2rem; margin-bottom:12px; }
+  .project-name { font-size:1.15rem; font-weight:700; margin-bottom:8px; color:#fff; }
+  .project-desc { font-size:.88rem; color:var(--muted); line-height:1.6; margin-bottom:16px; }
+  .project-tags { display:flex; flex-wrap:wrap; gap:6px; }
+  .tag {
+    background: rgba(37,99,235,.15);
+    border: 1px solid rgba(37,99,235,.3);
+    color: var(--accent2);
+    padding: 3px 10px;
+    border-radius:50px;
+    font-size:.72rem;
+    font-family:'Space Mono',monospace;
+  }
+
+  /* ── STATS ── */
+  #stats {
+    padding: 100px 24px;
+    max-width: 900px; margin: 0 auto;
+    text-align: center;
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-top: 48px;
+  }
+  .stats-grid img {
+    width:100%; border-radius:12px;
+    transition: transform .3s;
+  }
+  .stats-grid img:hover { transform: scale(1.02); }
+
+  /* ── CONTACTO ── */
+  #contacto {
+    padding: 100px 24px;
+    max-width: 700px; margin: 0 auto;
+    text-align: center;
+  }
+  .contact-desc { color:var(--muted); margin-bottom:40px; line-height:1.8; font-size:1rem; }
+  .contact-links { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; }
+  .contact-link {
+    display:flex; align-items:center; gap:10px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius:50px;
+    padding: 12px 24px;
+    text-decoration:none;
+    color: var(--text);
+    font-size:.9rem;
+    transition: all .25s;
+  }
+  .contact-link:hover { border-color:var(--accent); background:rgba(37,99,235,.1); transform:translateY(-3px); color:var(--accent2); }
+  .contact-link img { width:20px; height:20px; }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align:center; padding:32px;
+    color:var(--muted); font-size:.8rem;
+    border-top:1px solid var(--border);
+    position:relative; z-index:10;
+    font-family:'Space Mono',monospace;
+  }
+
+  /* ── SCROLL REVEAL ── */
+  .reveal { opacity:0; transform:translateY(40px); transition: opacity .7s ease, transform .7s ease; }
+  .reveal.visible { opacity:1; transform:none; }
+
+  /* ── RESPONSIVE ── */
+  @media(max-width:600px) {
+    nav { padding:16px 20px; }
+    .nav-links { display:none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- CURSORES -->
+<div id="c-outer"></div>
+<div id="c-inner"></div>
+
+<!-- MATRIX -->
+<canvas id="matrix"></canvas>
+
+<!-- PARTÍCULAS -->
+<canvas id="particles"></canvas>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">&lt;ElGolondras /&gt;</div>
+  <div class="nav-links">
+    <a href="#sobre">Sobre mí</a>
+    <a href="#tecnologias">Stack</a>
+    <a href="#proyectos">Proyectos</a>
+    <a href="#stats">Stats</a>
+    <a href="#contacto">Contacto</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="avatar-wrap">
+    <div class="avatar-ring"></div>
+    <img src="avatar.gif" onerror="this.src='https://github.com/ElGolondras.png'" alt="ElGolondras" />
+  </div>
+  <h1 class="hero-name">ElGolondras</h1>
+  <p class="hero-title" id="typing"></p>
+  <p class="hero-desc">Estudiante de Informática y Desarrollador de Software. Apasionado por la IA aplicada, el desarrollo de escritorio y construir cosas que resuelvan problemas reales.</p>
+  <div class="hero-btns">
+    <a href="#proyectos" class="btn btn-primary">Ver proyectos</a>
+    <a href="https://github.com/ElGolondras" target="_blank" class="btn btn-outline">GitHub ↗</a>
+    <a href="https://www.linkedin.com/in/juan-fontán-clavijo-7968a93a0/" target="_blank" class="btn btn-outline">LinkedIn ↗</a>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SOBRE MÍ -->
+<section id="sobre">
+  <h2 class="section-title reveal"><span>#</span> Sobre mí</h2>
+  <div class="code-block reveal">
+    <div class="code-dots">
+      <span class="dot-red"></span>
+      <span class="dot-yellow"></span>
+      <span class="dot-green"></span>
+    </div>
+    <span class="cm"># ElGolondras.py</span><br/>
+    <span class="kw">class</span> <span class="cl">ElGolondras</span>:<br/>
+    &nbsp;&nbsp;&nbsp;&nbsp;rol&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = [<span class="st">"Estudiante de Informática"</span>, <span class="st">"Desarrollador de Software"</span>]<br/>
+    &nbsp;&nbsp;&nbsp;&nbsp;ubicacion&nbsp;&nbsp; = [<span class="st">"España 🇪🇸"</span>]<br/>
+    &nbsp;&nbsp;&nbsp;&nbsp;aprendiendo = [<span class="st">"IA aplicada"</span>, <span class="st">"APIs REST"</span>, <span class="st">"Múltiples lenguajes"</span>]<br/>
+    &nbsp;&nbsp;&nbsp;&nbsp;proyectos&nbsp;&nbsp; = [<span class="st">"DigiHelp AI"</span>, <span class="st">"MZ2.0"</span>, <span class="st">"Mantenimiento_Dispositivos"</span>]<br/>
+    &nbsp;&nbsp;&nbsp;&nbsp;fun_fact&nbsp;&nbsp;&nbsp; = <span class="st">"Construí un chatbot con IA antes de terminar mis estudios 🤖"</span>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- TECNOLOGÍAS -->
+<section id="tecnologias">
+  <h2 class="section-title reveal"><span>#</span> Stack tecnológico</h2>
+  <div class="tech-grid reveal">
+    <div class="tech-item"><img src="https://skillicons.dev/icons?i=python" />Python</div>
+    <div class="tech-item"><img src="https://skillicons.dev/icons?i=javascript" />JavaScript</div>
+    <div class="tech-item"><img src="https://skillicons.dev/icons?i=java" />Java</div>
+    <div class="tech-item"><img src="https://skillicons.dev/icons?i=cs" />C#</div>
+    <div class="tech-item"><img src="https://skillicons.dev/icons?i=kotlin" />Kotlin</div>
+    <div class="tech-item"><img src="https://skillicons.dev/icons?i=php" />PHP</div>
+    <div class="tech-item"><img src="https://skillicons.dev/icons?i=laravel" />Laravel</div>
+    <div class="tech-item"><img src="https://skillicons.dev/icons?i=html" />HTML</div>
+    <div class="tech-item"><img src="https://skillicons.dev/icons?i=css" />CSS</div>
+    <div class="tech-item"><img src="https://skillicons.dev/icons?i=mysql" />SQL</div>
+    <div class="tech-item"><img src="https://skillicons.dev/icons?i=git" />Git</div>
+    <div class="tech-item"><img src="https://skillicons.dev/icons?i=github" />GitHub</div>
+    <div class="tech-item"><img src="https://skillicons.dev/icons?i=vscode" />VS Code</div>
+    <div class="tech-item"><img src="https://skillicons.dev/icons?i=idea" />IntelliJ</div>
+    <div class="tech-item"><img src="https://skillicons.dev/icons?i=supabase" />Supabase</div>
+    <div class="tech-item"><img src="https://skillicons.dev/icons?i=docker" />Docker</div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PROYECTOS -->
+<section id="proyectos">
+  <h2 class="section-title reveal"><span>#</span> Proyectos destacados</h2>
+  <div class="projects-grid">
+    <a href="https://github.com/ElGolondras/DIGI_HELPBOT" target="_blank" class="project-card reveal">
+      <div class="project-icon">🤖</div>
+      <div class="project-name">DigiHelp AI</div>
+      <div class="project-desc">Chatbot de escritorio para soporte IT empresarial con IA, análisis de imágenes, documentos y tutoriales en video.</div>
+      <div class="project-tags">
+        <span class="tag">Python</span>
+        <span class="tag">Groq API</span>
+        <span class="tag">CustomTkinter</span>
+        <span class="tag">LLaMA 3.3</span>
+      </div>
+    </a>
+    <a href="https://github.com/ElGolondras" target="_blank" class="project-card reveal">
+      <div class="project-icon">⚙️</div>
+      <div class="project-name">MZ2.0</div>
+      <div class="project-desc">Proyecto en desarrollo. Más información próximamente.</div>
+      <div class="project-tags">
+        <span class="tag">En desarrollo</span>
+      </div>
+    </a>
+    <a href="https://github.com/ElGolondras" target="_blank" class="project-card reveal">
+      <div class="project-icon">🖥️</div>
+      <div class="project-name">Mantenimiento Dispositivos</div>
+      <div class="project-desc">Proyecto en desarrollo. Más información próximamente.</div>
+      <div class="project-tags">
+        <span class="tag">En desarrollo</span>
+      </div>
+    </a>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- STATS -->
+<section id="stats">
+  <h2 class="section-title reveal" style="justify-content:center;"><span>#</span> GitHub Stats</h2>
+  <div class="stats-grid">
+    <img src="https://github-readme-stats.vercel.app/api?username=ElGolondras&show_icons=true&theme=tokyonight&hide_border=true&bg_color=00000000&title_color=2563EB&icon_color=2563EB&text_color=e2e8f0" class="reveal" />
+    <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=ElGolondras&layout=compact&theme=tokyonight&hide_border=true&bg_color=00000000&title_color=2563EB&text_color=e2e8f0" class="reveal" />
+    <img src="https://streak-stats.demolab.com?user=ElGolondras&theme=tokyonight&hide_border=true&background=00000000&ring=2563EB&fire=2563EB&currStreakLabel=2563EB" class="reveal" style="grid-column:1/-1;" />
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CONTACTO -->
+<section id="contacto">
+  <h2 class="section-title reveal" style="justify-content:center;"><span>#</span> Contacto</h2>
+  <p class="contact-desc reveal">¿Tienes algún proyecto interesante o quieres colaborar? ¡Hablemos!</p>
+  <div class="contact-links reveal">
+    <a href="https://github.com/ElGolondras" target="_blank" class="contact-link">
+      <img src="https://skillicons.dev/icons?i=github" /> GitHub
+    </a>
+    <a href="https://www.linkedin.com/in/juan-fontán-clavijo-7968a93a0/" target="_blank" class="contact-link">
+      <img src="https://skillicons.dev/icons?i=linkedin" /> LinkedIn
+    </a>
+  </div>
+</section>
+
+<footer>
+  <p>Hecho con ❤️ por <strong>ElGolondras</strong> · España 🇪🇸</p>
+</footer>
+
+<script>
+// ── CURSOR ──
+const co = document.getElementById('c-outer');
+const ci = document.getElementById('c-inner');
+let mx=0, my=0, ox=0, oy=0;
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  ci.style.left = mx+'px'; ci.style.top = my+'px';
+});
+(function loop(){ ox+=(mx-ox)*.12; oy+=(my-oy)*.12;
+  co.style.left=ox+'px'; co.style.top=oy+'px';
+  requestAnimationFrame(loop); })();
+
+// ── MATRIX ──
+const mc = document.getElementById('matrix');
+const mctx = mc.getContext('2d');
+function resizeM(){ mc.width=innerWidth; mc.height=innerHeight; }
+resizeM(); addEventListener('resize', resizeM);
+const chars='アイウエオカキクケコABCDEF0123456789</>{}[]';
+const fs=13;
+let cols=Math.floor(mc.width/fs), drops=Array(cols).fill(1);
+addEventListener('resize',()=>{ cols=Math.floor(mc.width/fs); drops=Array(cols).fill(1); });
+setInterval(()=>{
+  mctx.fillStyle='rgba(0,0,0,0.04)';
+  mctx.fillRect(0,0,mc.width,mc.height);
+  mctx.font=fs+'px monospace';
+  for(let i=0;i<drops.length;i++){
+    const ch=chars[Math.floor(Math.random()*chars.length)];
+    mctx.fillStyle=Math.random()>.95?'#fff':'#2563eb';
+    mctx.fillText(ch,i*fs,drops[i]*fs);
+    if(drops[i]*fs>mc.height&&Math.random()>.975) drops[i]=0;
+    drops[i]++;
+  }
+},45);
+
+// ── PARTÍCULAS ──
+const pc = document.getElementById('particles');
+const pctx = pc.getContext('2d');
+function resizeP(){ pc.width=innerWidth; pc.height=innerHeight; }
+resizeP(); addEventListener('resize', resizeP);
+const N=80;
+const pts=Array.from({length:N},()=>({
+  x:Math.random()*pc.width, y:Math.random()*pc.height,
+  r:Math.random()*2+.5,
+  vx:(Math.random()-.5)*.5, vy:(Math.random()-.5)*.5,
+  a:Math.random()*.5+.1,
+  c:Math.random()>.5?'37,99,235':'148,163,184'
+}));
+(function loop(){
+  pctx.clearRect(0,0,pc.width,pc.height);
+  pts.forEach(p=>{
+    p.x+=p.vx; p.y+=p.vy;
+    if(p.x<0||p.x>pc.width) p.vx*=-1;
+    if(p.y<0||p.y>pc.height) p.vy*=-1;
+    pctx.beginPath();
+    pctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    pctx.fillStyle=`rgba(${p.c},${p.a})`;
+    pctx.fill();
+  });
+  for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++){
+    const dx=pts[i].x-pts[j].x, dy=pts[i].y-pts[j].y;
+    const d=Math.sqrt(dx*dx+dy*dy);
+    if(d<120){ pctx.beginPath();
+      pctx.strokeStyle=`rgba(37,99,235,${.15*(1-d/120)})`;
+      pctx.lineWidth=.5;
+      pctx.moveTo(pts[i].x,pts[i].y);
+      pctx.lineTo(pts[j].x,pts[j].y);
+      pctx.stroke(); }
+  }
+  requestAnimationFrame(loop);
+})();
+
+// ── TYPING ──
+const phrases=['Estudiante de Informática 🎓','Desarrollador de Software 💻','Creador de DigiHelp AI 🤖','Apasionado por la IA 🚀'];
+let pi=0, ci2=0, del=false;
+const el=document.getElementById('typing');
+el.classList.add('typing');
+setInterval(()=>{
+  const p=phrases[pi];
+  if(!del){ el.textContent=p.slice(0,++ci2);
+    if(ci2===p.length){ del=true; setTimeout(()=>{},1200); }
+  } else { el.textContent=p.slice(0,--ci2);
+    if(ci2===0){ del=false; pi=(pi+1)%phrases.length; }
+  }
+},80);
+
+// ── SCROLL REVEAL ──
+const obs=new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting) e.target.classList.add('visible');
+}),{threshold:.15});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>
